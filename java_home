@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -eu
-versions() {
+versionsVerbose() {
 	printf "Matching Java Virtual Machines ($(ls /usr/lib/jvm | grep -Eo '(java-[0-9]\.[0-9]{1,2}\.[0-9]-openjdk((-amd64)?(-i386)?))+' | wc -l)):\n"
 	for jdk in `ls /usr/lib/jvm | grep -Eo '(java-[0-9]\.[0-9]{1,2}\.[0-9]-openjdk((-amd64)?(-i386)?))+' | sed 's/ /\n/g'`; do
 		version=$(printf "${jdk}" | grep -Eo '[0-9]\.[0-9]{1,2}\.[0-9]+')
@@ -12,4 +12,39 @@ versions() {
 		printf "    ${version}, ${arch}:  \"Java SE ${number}\" /usr/lib/jvm/${jdk}\n"
 	done
 }
+Help() {
+	cat <<- EOH
+	Usage: $0 [options...]
+    	Returns the path to a Java home directory from the current user's settings.
+	Options:
+    	[-v <version>]       Filter Java versions in the "JVMVersion" from <version>.
+    	[-a <architecture>]  Filter JVMs matching architecture (i386, x86_64, etc).
+    	[-E <command> ...]   Execute the JAVA_HOME/bin/<command> with the remaining arguments (requires version and arch).
+    	[-I]                 Print full JVM list with architectures.
+    	[-J]		     Print the selected Java version in a format for JAVA_HOME (requires version and arch).
+	EOH
+}
+while getopts "v:a:E:IJ" option; do
+    case $option in
+    	v) 
+        	fVers=$OPTARG;;
+    	a) 
+        	fArch=$OPTARG;;
+    	E) 
+        	/usr/lib/jvm/java-${fVers}-openjdk-$(printf "${fArch}" | sed 's/x86_64/amd64/g')/bin/$(printf -- "${*}" | sed -E "s/-v ${fVers} -a ${fArch} -E //g" )
+        	exit;;
+        I)
+			versionsVerbose
+			exit;;
+		J)
+			printf "/usr/lib/jvm/java-${fVers}-openjdk-$(printf "${fArch}" | sed 's/x86_64/amd64/g')"
+			exit;;
+    	\?)	# Invalid option
+        	Help
+        	exit;;
+    esac
+done
+if [ "$#" -eq 0 ]; then 
+	Help
+fi
 exit 0
