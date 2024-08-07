@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -eu
+versions() {
+	printf "Matching Java Virtual Machines ($(ls /usr/lib/jvm | grep -Eo '(java-[0-9]\.[0-9]{1,2}\.[0-9]-openjdk((-amd64)?(-i386)?))+' | wc -l)):\n"
+	for jdk in `ls /usr/lib/jvm | grep -Eo '(java-[0-9]\.[0-9]{1,2}\.[0-9]-openjdk((-amd64)?(-i386)?))+' | sed 's/ /\n/g'`; do
+		version=$(printf "${jdk}" | grep -Eo '[0-9]\.[0-9]{1,2}\.[0-9]+')
+		arch=$(printf "${jdk}" | grep -Eo '((amd64)?(i386)?)+')
+		if [ "$arch" = "amd64" ]; then
+			arch="x86_64"
+		fi
+		number=$(printf "${jdk}" | grep -Eo '[0-9]\.[0-9]{1,2}' | sed 's/[0-9]\.//g')
+		printf "    ${version}, ${arch}:  \"Java SE ${number}\" /usr/lib/jvm/${jdk}\n"
+	done
+}
+exit 0
